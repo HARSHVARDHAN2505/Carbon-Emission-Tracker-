@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CarbonTrack</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+
+<!-- ── Logger Modal ── -->
+<div class="modal-overlay" id="logger-modal" onclick="handleOverlayClick(event)">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title">// LOG ACTIVITY</div>
+      <div class="modal-close" onclick="closeLogger()">✕</div>
+    </div>
+    <div class="log-cat-tabs">
+      <div class="log-cat-tab active" data-cat="transport" onclick="renderLoggerForm('transport')">🚗 Transport</div>
+      <div class="log-cat-tab" data-cat="food"      onclick="renderLoggerForm('food')">🍽️ Food</div>
+      <div class="log-cat-tab" data-cat="home"      onclick="renderLoggerForm('home')">⚡ Home</div>
+      <div class="log-cat-tab" data-cat="shopping"  onclick="renderLoggerForm('shopping')">🛍️ Shop</div>
+    </div>
+    <div class="log-form-scroll">
+      <div id="log-form-body"></div>
+    </div>
+    <div class="modal-footer">
+      <div class="modal-hint">Enter quantities for each activity done today</div>
+      <button class="log-submit-btn" onclick="submitLog()">CALCULATE + LOG →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── App Shell ── -->
+<div class="wrap">
+<div class="phone">
+
+  <div class="sbar">
+    <span class="sbar-time" id="live-time">09:41</span>
+    <span class="sbar-app">CARBONTRACK</span>
+    <span class="sbar-bat">87%</span>
+  </div>
+
+  <div class="ntabs">
+    <div class="ntab on"  onclick="goPage('home',this,0)">HOME</div>
+    <div class="ntab"     onclick="goPage('impact',this,1)">IMPACT</div>
+    <div class="ntab"     onclick="goPage('forest',this,3)">FOREST</div>
+    <div class="ntab"     onclick="goPage('gamify',this,3)">GAMIFY</div>
+    <div class="ntab"     onclick="goPage('social',this,4)">SOCIAL</div>
+  </div>
+
+  <!-- HOME -->
+  <div id="home" class="pg on">
+    <div class="score-hero">
+      <div class="ring-wrap">
+        <svg viewBox="0 0 150 150">
+          <circle cx="75" cy="75" r="64" fill="none" stroke="#161616" stroke-width="8"/>
+          <circle id="score-ring-circle" cx="75" cy="75" r="64" fill="none"
+            stroke="#39FF6E" stroke-width="8" stroke-dasharray="402" stroke-dashoffset="402"
+            stroke-linecap="round" transform="rotate(-90 75 75)" opacity=".9"/>
+        </svg>
+        <div class="ring-center">
+          <div class="ring-num" id="score-num">--</div>
+          <div class="ring-lbl">SCORE</div>
+        </div>
+      </div>
+      <div class="lvl-pill"><div class="pulse"></div><span id="level-label">LOG TO SCORE</span></div>
+      <div class="sub-txt" id="level-next">// tap + to log your first activity</div>
+    </div>
+
+    <div class="story-box">
+      <div class="story-label">// today's log</div>
+      <div class="story-main" id="story-main-text">No activities logged yet. Tap <em>+</em> to start tracking.</div>
+      <div class="story-sub"  id="story-sub-text">Daily target: 3.5kg CO₂</div>
+    </div>
+
+    <div class="target-section">
+      <div class="target-header">
+        <div class="sh" style="margin-bottom:0">// daily target</div>
+        <div class="target-total" id="total-co2-display">0.00 kg CO₂</div>
+      </div>
+      <div class="target-track">
+        <div class="target-bar-fill" id="target-bar" style="width:0%"></div>
+        <div class="target-marker"></div>
+      </div>
+      <div class="target-label" id="target-pct">0% of daily target (3.5kg)</div>
+    </div>
+
+    <div class="sh">// breakdown</div>
+    <div class="bars">
+      <div class="brow"><div class="blbl">TRANSPORT</div><div class="btrack"><div class="bfill ct" id="bar-transport" style="width:0%"></div></div><div class="bval" id="val-transport">0.0kg</div></div>
+      <div class="brow"><div class="blbl">FOOD</div><div class="btrack"><div class="bfill cf" id="bar-food" style="width:0%"></div></div><div class="bval" id="val-food">0.0kg</div></div>
+      <div class="brow"><div class="blbl">HOME</div><div class="btrack"><div class="bfill ch" id="bar-home" style="width:0%"></div></div><div class="bval" id="val-home">0.0kg</div></div>
+      <div class="brow"><div class="blbl">SHOPPING</div><div class="btrack"><div class="bfill cs" id="bar-shopping" style="width:0%"></div></div><div class="bval" id="val-shopping">0.0kg</div></div>
+    </div>
+
+    <div class="sh">// weekly trend</div>
+    <div class="weekly-chart">
+      <div class="wchart-bars" id="wbars"></div>
+      <div class="wdays-row">
+        <span class="wday">MON</span><span class="wday">TUE</span><span class="wday">WED</span>
+        <span class="wday">THU</span><span class="wday">FRI</span>
+        <span class="wday today">SAT</span><span class="wday">SUN</span>
+      </div>
+    </div>
+
+    <div class="sh">// activity log</div>
+    <div id="activity-feed">
+      <div class="empty-feed">// No activities logged yet.<br>Tap + to log your first activity.</div>
+    </div>
+  </div>
+
+  <!-- IMPACT -->
+  <div id="impact" class="pg">
+    <div class="sh">// visual equivalents</div>
+    <div class="equiv-list" id="equivalents-list">
+      <div class="equiv"><div class="eico">🌳</div><div class="etxt"><div class="em">Log activities to see your impact</div><div class="es">Equivalents update in real time</div></div></div>
+    </div>
+
+    <div class="sh" style="margin-top:14px">// emission factors (real-world data)</div>
+    <div class="factors-grid">
+      <div class="factor-card">
+        <div class="fc-cat">🚗 Transport</div>
+        <div class="fc-row"><span>Petrol car</span><span class="fc-val">0.192 kg/km</span></div>
+        <div class="fc-row"><span>Metro/Train</span><span class="fc-val">0.041 kg/km</span></div>
+        <div class="fc-row"><span>Bus</span><span class="fc-val">0.089 kg/km</span></div>
+        <div class="fc-row"><span>Domestic flight</span><span class="fc-val">0.255 kg/km</span></div>
+        <div class="fc-row"><span>Electric car</span><span class="fc-val">0.053 kg/km</span></div>
+        <div class="fc-src">Source: DEFRA 2023</div>
+      </div>
+      <div class="factor-card">
+        <div class="fc-cat">🍽️ Food</div>
+        <div class="fc-row"><span>Beef meal</span><span class="fc-val">6.61 kg/meal</span></div>
+        <div class="fc-row"><span>Chicken meal</span><span class="fc-val">0.97 kg/meal</span></div>
+        <div class="fc-row"><span>Vegetarian</span><span class="fc-val">0.43 kg/meal</span></div>
+        <div class="fc-row"><span>Vegan</span><span class="fc-val">0.18 kg/meal</span></div>
+        <div class="fc-row"><span>South Indian veg</span><span class="fc-val">0.29 kg/meal</span></div>
+        <div class="fc-src">Source: Poore &amp; Nemecek 2018</div>
+      </div>
+      <div class="factor-card">
+        <div class="fc-cat">⚡ Home</div>
+        <div class="fc-row"><span>Electricity (India)</span><span class="fc-val">0.716 kg/kWh</span></div>
+        <div class="fc-row"><span>AC (per hour)</span><span class="fc-val">1.003 kg/hr</span></div>
+        <div class="fc-row"><span>LPG cooking</span><span class="fc-val">0.63 kg/meal</span></div>
+        <div class="fc-row"><span>Hot shower/min</span><span class="fc-val">0.048 kg/min</span></div>
+        <div class="fc-row"><span>Ceiling fan/hr</span><span class="fc-val">0.057 kg/hr</span></div>
+        <div class="fc-src">Source: India CEA 2023 / BEE</div>
+      </div>
+      <div class="factor-card">
+        <div class="fc-cat">🛍️ Shopping</div>
+        <div class="fc-row"><span>Clothing item</span><span class="fc-val">10.0 kg/item</span></div>
+        <div class="fc-row"><span>Laptop/TV</span><span class="fc-val">300 kg/item</span></div>
+        <div class="fc-row"><span>Online delivery</span><span class="fc-val">0.44 kg/order</span></div>
+        <div class="fc-row"><span>Streaming/hr</span><span class="fc-val">0.036 kg/hr</span></div>
+        <div class="fc-row"><span>Plastic bag</span><span class="fc-val">0.033 kg/bag</span></div>
+        <div class="fc-src">Source: Carbon Trust / DEFRA 2023</div>
+      </div>
+    </div>
+
+    <div class="sh" style="margin-top:14px">// air quality — chennai</div>
+    <div class="aqi-grid">
+      <div class="aq">
+        <div class="aq-ring"><svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="20" fill="none" stroke="#1a1a1a" stroke-width="5"/><circle cx="26" cy="26" r="20" fill="none" stroke="var(--amber)" stroke-width="5" stroke-dasharray="126" stroke-dashoffset="44" stroke-linecap="round" transform="rotate(-90 26 26)"/></svg><div class="aq-val" style="color:var(--amber)">98</div></div>
+        <div class="aq-lbl">AQI</div>
+      </div>
+      <div class="aq">
+        <div class="aq-ring"><svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="20" fill="none" stroke="#1a1a1a" stroke-width="5"/><circle cx="26" cy="26" r="20" fill="none" stroke="var(--cyan)" stroke-width="5" stroke-dasharray="126" stroke-dashoffset="76" stroke-linecap="round" transform="rotate(-90 26 26)"/></svg><div class="aq-val" style="color:var(--cyan);font-size:10px">42µg</div></div>
+        <div class="aq-lbl">PM2.5</div>
+      </div>
+      <div class="aq">
+        <div class="aq-ring"><svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="20" fill="none" stroke="#1a1a1a" stroke-width="5"/><circle cx="26" cy="26" r="20" fill="none" stroke="var(--neon)" stroke-width="5" stroke-dasharray="126" stroke-dashoffset="94" stroke-linecap="round" transform="rotate(-90 26 26)"/></svg><div class="aq-val" style="color:var(--neon);font-size:10px">36°C</div></div>
+        <div class="aq-lbl">TEMP</div>
+      </div>
+    </div>
+
+    <div class="sh">// pollution hotspots</div>
+    <div class="map-box">
+      <div class="map-inner">
+        <div class="mgrid"></div>
+        <div class="hs hs1"></div><div class="hs hs2"></div><div class="hs hs3"></div>
+        <div class="udot"></div>
+        <div class="city-lbl">CHENNAI_TN</div>
+      </div>
+      <div class="map-leg">
+        <div class="ml"><div class="mld" style="background:var(--red)"></div>HIGH</div>
+        <div class="ml"><div class="mld" style="background:var(--amber)"></div>MED</div>
+        <div class="ml"><div class="mld" style="background:var(--neon)"></div>CLEAN</div>
+        <div class="ml"><div class="mld" style="background:var(--neon);box-shadow:0 0 4px var(--neon)"></div>YOU</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOREST -->
+  <div id="forest" class="pg">
+    <div class="forest-hero">
+      <div class="fh-top">
+        <div><div class="fh-title">MY_FOREST</div><div class="fh-sub">// growing since JAN 2025</div></div>
+        <div><div class="fh-num" id="tree-count">23</div><div class="fh-unit">TREES ALIVE</div><div class="fh-co2" id="co2-offset">≈ 46kg CO₂/yr</div></div>
+      </div>
+      <div class="forest-ground">
+        <div class="mgrid2"></div>
+        <div class="trees-grid" id="trees-grid"></div>
+        <div class="ground-strip"></div>
+        <div class="toast" id="toast"></div>
+      </div>
+      <div class="forest-legend">
+        <div class="fl"><div class="fld" style="background:#0d4a1c"></div>SAPLING</div>
+        <div class="fl"><div class="fld" style="background:#0f6626"></div>YOUNG</div>
+        <div class="fl"><div class="fld" style="background:#13882f"></div>MATURE</div>
+        <div class="fl"><div class="fld" style="background:#3a2010"></div>WITHERED</div>
+      </div>
+    </div>
+    <div class="pr-wrap">
+      <svg viewBox="0 0 110 110">
+        <circle cx="55" cy="55" r="46" fill="none" stroke="#161616" stroke-width="7"/>
+        <circle cx="55" cy="55" r="46" fill="none" stroke="var(--neon)" stroke-width="7"
+          stroke-dasharray="289" id="ring-fill" stroke-dashoffset="72"
+          stroke-linecap="round" transform="rotate(-90 55 55)"/>
+      </svg>
+      <div class="pr-center"><div class="pr-num" id="ring-pct">75%</div><div class="pr-lbl">HEALTH</div></div>
+    </div>
+    <div class="forest-stats">
+      <div class="fs"><div class="fs-v" style="color:var(--neon)" id="stat-alive">23</div><div class="fs-l">ALIVE</div></div>
+      <div class="fs"><div class="fs-v" style="color:var(--amber)" id="stat-total">31</div><div class="fs-l">PLANTED</div></div>
+      <div class="fs"><div class="fs-v" style="color:var(--red)" id="stat-lost">8</div><div class="fs-l">LOST</div></div>
+    </div>
+    <div class="sim-controls">
+      <div class="sim-title">// simulate actions</div>
+      <div class="sim-btns">
+        <div class="sim-btn sbg" onclick="addTree()">🌱 Low emission day<br><span class="sim-sub">+1 tree</span></div>
+        <div class="sim-btn sbg" onclick="addTree();addTree()">🚶 No car week<br><span class="sim-sub">+2 trees</span></div>
+        <div class="sim-btn sbr" onclick="removeTree()">🚗 High emission day<br><span class="sim-sub">−1 tree</span></div>
+        <div class="sim-btn sbr" onclick="removeTree();removeTree()">✈️ Long-haul flight<br><span class="sim-sub">−2 trees</span></div>
+      </div>
+    </div>
+    <div class="sh">// forest log</div>
+    <div class="tl-item"><div class="tl-ico gained">🌱</div><div><div class="tl-txt">5-day green streak</div><div class="tl-sub-sm">TODAY · 09:00</div><div class="tl-delta delta-up">+1 tree planted</div></div></div>
+    <div class="tl-item"><div class="tl-ico milestone">🏆</div><div><div class="tl-txt">Completed "No Car Week"</div><div class="tl-sub-sm">YESTERDAY</div><div class="tl-delta delta-up">+2 trees planted</div></div></div>
+    <div class="tl-item"><div class="tl-ico lost">🥀</div><div><div class="tl-txt">High emission day (7.2kg)</div><div class="tl-sub-sm">3 DAYS AGO</div><div class="tl-delta delta-dn">−1 tree withered</div></div></div>
+  </div>
+
+  <!-- GAMIFY -->
+  <div id="gamify" class="pg">
+    <div class="xp-card">
+      <div class="xp-top">
+        <div class="av-ring"><div class="av-in">YOU</div><div class="av-dot"></div></div>
+        <div style="flex:1">
+          <div class="xpname">YOUR_PROFILE</div>
+          <div class="xplvl" id="gamify-level">LOG ACTIVITIES TO SCORE</div>
+          <div class="xprank">RANK #3 CHENNAI · TOP 12% GLOBAL</div>
+        </div>
+      </div>
+      <div class="xpbar-meta"><span>2,840 XP</span><span>LV8 — CLIMATE CHAMPION</span></div>
+      <div class="xptrack"><div class="xpfill"></div></div>
+      <div class="xpnext">// 460 XP to next level</div>
+    </div>
+    <div class="g3">
+      <div class="scard" style="text-align:center"><div class="scard-v" style="color:var(--neon)" id="gamify-score">--</div><div class="scard-l">SCORE</div></div>
+      <div class="scard" style="text-align:center"><div class="scard-v" style="color:var(--amber)">12</div><div class="scard-l">STREAK</div></div>
+      <div class="scard" style="text-align:center"><div class="scard-v" style="color:var(--cyan)">9</div><div class="scard-l">BADGES</div></div>
+    </div>
+    <div class="streak-box">
+      <div class="streak-top-row">
+        <div><div class="snum">12 DAYS</div><div class="ssub">// green streak active</div></div>
+        <div class="sbest">BEST: <span>21 DAYS</span></div>
+      </div>
+      <div class="sdays">
+        <div class="sd done"><div class="sd-d">MON</div><div class="sd-i">✓</div></div>
+        <div class="sd done"><div class="sd-d">TUE</div><div class="sd-i">✓</div></div>
+        <div class="sd done"><div class="sd-d">WED</div><div class="sd-i">✓</div></div>
+        <div class="sd done"><div class="sd-d">THU</div><div class="sd-i">✓</div></div>
+        <div class="sd done"><div class="sd-d">FRI</div><div class="sd-i">✓</div></div>
+        <div class="sd now"><div class="sd-d">SAT</div><div class="sd-i sd-now-lbl">NOW</div></div>
+        <div class="sd miss"><div class="sd-d">SUN</div><div class="sd-i sd-miss-dot">○</div></div>
+      </div>
+    </div>
+    <div class="sh">// level progression</div>
+    <div class="lvl-ladder">
+      <div class="llrow"><div class="lllbl" style="color:var(--neon)">BEGINNER</div><div class="lltrack"><div class="llfill" style="width:100%;background:var(--neon)"></div></div><div class="llpct" style="color:var(--neon)">DONE</div></div>
+      <div class="llrow"><div class="lllbl" style="color:var(--neon)">GREEN GUARD</div><div class="lltrack"><div class="llfill" style="width:100%;background:var(--neon)"></div></div><div class="llpct" style="color:var(--neon)">DONE</div></div>
+      <div class="llrow"><div class="lllbl" style="color:var(--neon)">ECO WARRIOR</div><div class="lltrack"><div class="llfill" id="warrior-fill" style="width:75%;background:var(--neon)"></div></div><div class="llpct" id="warrior-pct" style="color:var(--amber)">75%</div></div>
+      <div class="llrow locked"><div class="lllbl">CLIMATE CHAMP</div><div class="lltrack"><div class="llfill" style="width:0%;background:var(--purple)"></div></div><div class="llpct">LOCK</div></div>
+      <div class="llrow locked" style="opacity:.2"><div class="lllbl">EARTH HERO</div><div class="lltrack"><div class="llfill" style="width:0%;background:var(--amber)"></div></div><div class="llpct">LOCK</div></div>
+    </div>
+    <div class="sh">// active challenges</div>
+    <div class="ch-list">
+      <div class="ch ca"><div class="ch-hd"><div class="ch-title"><span class="ch-ico">🚇</span>No Car Week</div><div class="ch-pill pa">ACTIVE</div></div><div class="ch-desc">Public transport or walking only for 7 consecutive days.</div><div class="ch-prog"><div class="chpf pfa" style="width:71%"></div></div><div class="ch-foot"><span>5 / 7 days</span><span class="ch-xp xg">+150 XP</span></div></div>
+      <div class="ch cn"><div class="ch-hd"><div class="ch-title"><span class="ch-ico">🌿</span>Plant-Based Weekend</div><div class="ch-pill pn">NEW</div></div><div class="ch-desc">Zero animal products Saturday and Sunday.</div><div class="ch-prog"><div class="chpf pfb" style="width:0%"></div></div><div class="ch-foot"><span>Starts tomorrow</span><span class="ch-xp xb">+80 XP</span></div></div>
+      <div class="ch ce"><div class="ch-hd"><div class="ch-title"><span class="ch-ico">🏆</span>Zero Carbon Sunday</div><div class="ch-pill pe">EPIC</div></div><div class="ch-desc">Stay under 0.5kg CO₂ for an entire day.</div><div class="ch-prog"><div class="chpf pfp" style="width:0%"></div></div><div class="ch-foot"><span>Not started</span><span class="ch-xp xp">+500 XP</span></div></div>
+    </div>
+  </div>
+
+  <!-- SOCIAL -->
+  <div id="social" class="pg">
+    <div class="lb-scope">
+      <div class="lbs on" id="lbs-f" onclick="swLb('f')">FRIENDS</div>
+      <div class="lbs off" id="lbs-c" onclick="swLb('c')">CHENNAI</div>
+      <div class="lbs off" id="lbs-g" onclick="swLb('g')">GLOBAL</div>
+    </div>
+    <div class="podium">
+      <div class="pod"><div class="pod-av p2">KS</div><div class="pod-nm">KARTHIK</div><div class="pod-sc" style="color:#aaa">82</div><div class="pod-blk pb2"><div class="pod-rk">2</div></div></div>
+      <div class="pod"><div class="pod-av p1">PR</div><div class="pod-nm">PRIYA</div><div class="pod-sc" style="color:var(--amber)">89</div><div class="pod-blk pb1"><div class="pod-rk" style="color:rgba(255,184,0,.4)">1</div></div></div>
+      <div class="pod"><div class="pod-av p3" style="font-size:10px">YOU</div><div class="pod-nm" style="color:var(--neon)">YOU</div><div class="pod-sc" id="social-score" style="color:var(--neon)">--</div><div class="pod-blk pb3"><div class="pod-rk" style="color:rgba(57,255,110,.4)">3</div></div></div>
+    </div>
+    <div class="lb-list">
+      <div class="lbr"><div class="lbrk" style="color:var(--amber)">1</div><div class="lbav" style="background:rgba(255,184,0,.08);color:var(--amber)">PR</div><div class="lbinfo"><div class="lbnm">Priya R.</div><div class="lbloc">ANNA NAGAR · 21d streak</div></div><div style="text-align:right"><div class="lbsc" style="color:var(--amber)">89</div><div class="lbdelta du">▲ 2</div></div></div>
+      <div class="lbr"><div class="lbrk" style="color:#aaa">2</div><div class="lbav" style="background:rgba(180,180,180,.06);color:#aaa">KS</div><div class="lbinfo"><div class="lbnm">Karthik S.</div><div class="lbloc">T. NAGAR · 9d streak</div></div><div style="text-align:right"><div class="lbsc" style="color:#aaa">82</div><div class="lbdelta dd">▼ 1</div></div></div>
+      <div class="lbr me"><div class="lbrk" style="color:var(--neon)">3</div><div class="lbav" style="background:rgba(57,255,110,.08);color:var(--neon);font-size:9px">YOU</div><div class="lbinfo"><div class="lbnm" style="color:var(--neon)">You</div><div class="lbloc">ADYAR · 12d streak</div></div><div style="text-align:right"><div class="lbsc" style="color:var(--neon)" id="lb-your-score">--</div><div class="lbdelta du">▲ live</div></div></div>
+      <div class="lbr"><div class="lbrk">4</div><div class="lbav" style="background:rgba(255,59,59,.07);color:var(--red)">AM</div><div class="lbinfo"><div class="lbnm">Anjali M.</div><div class="lbloc">VELACHERY · 5d streak</div></div><div style="text-align:right"><div class="lbsc">71</div><div class="lbdelta">—</div></div></div>
+      <div class="lbr"><div class="lbrk">5</div><div class="lbav" style="background:rgba(191,95,255,.07);color:var(--purple)">RV</div><div class="lbinfo"><div class="lbnm">Ravi V.</div><div class="lbloc">MYLAPORE · 3d streak</div></div><div style="text-align:right"><div class="lbsc">66</div><div class="lbdelta dd">▼ 2</div></div></div>
+    </div>
+    <div class="story-box" style="margin-bottom:10px">
+      <div class="story-label">// community · this week</div>
+      <div class="story-main">Chennai saved <em>8.4T CO₂</em> together</div>
+      <div class="story-sub">= 420 trees worth of absorption</div>
+    </div>
+    <div class="sh">// activity feed</div>
+    <div class="feed-item"><div class="fi-av" style="background:rgba(255,184,0,.07);color:var(--amber)">PR</div><div><div class="fi-txt"><span class="fi-nm">Priya</span> completed "No Car Week" 🏆</div><div class="fi-time">2 HOURS AGO</div></div></div>
+    <div class="feed-item"><div class="fi-av" style="background:rgba(57,255,110,.06);color:var(--neon)">KS</div><div><div class="fi-txt"><span class="fi-nm">Karthik</span> hit a 21-day streak 🔥</div><div class="fi-time">5 HOURS AGO</div></div></div>
+    <div class="feed-item"><div class="fi-av" style="background:rgba(255,59,59,.06);color:var(--red)">AM</div><div><div class="fi-txt"><span class="fi-nm">Anjali</span> earned "Veggie Days" badge 🌿</div><div class="fi-time">YESTERDAY</div></div></div>
+  </div>
+
+  <!-- Bottom Nav -->
+  <div class="bnav">
+    <div class="bni on"  onclick="goPage('home',null,0)"><div class="bni-ic">🏠</div><div class="bni-lb">HOME</div></div>
+    <div class="bni"     onclick="goPage('impact',null,1)"><div class="bni-ic">🌍</div><div class="bni-lb">IMPACT</div></div>
+    <div class="bni bni-ctr" onclick="openLogger()"><div class="bni-ic">+</div><div class="bni-lb">LOG</div></div>
+    <div class="bni"     onclick="goPage('forest',null,3)"><div class="bni-ic">🌲</div><div class="bni-lb">FOREST</div></div>
+    <div class="bni"     onclick="goPage('gamify',null,4)"><div class="bni-ic">🏆</div><div class="bni-lb">GAMIFY</div></div>
+  </div>
+
+</div>
+</div>
+
+<script src="js/emissions.js"></script>
+<script src="js/app.js"></script>
+<script>
+function handleOverlayClick(e) {
+  if (e.target.id === 'logger-modal') closeLogger();
+}
+// Patch recalcAll to also sync social/gamify score displays
+const _base = recalcAll;
+recalcAll = function() {
+  _base();
+  const s = state.score;
+  ['social-score','lb-your-score','gamify-score'].forEach(function(id) {
+    var el = document.getElementById(id); if (el) el.textContent = s;
+  });
+  var gl = document.getElementById('gamify-level');
+  if (gl) gl.textContent = CT.getLevel(s).label;
+  // update warrior fill bar to reflect actual score progress toward 90
+  var wf = document.getElementById('warrior-fill');
+  var wp = document.getElementById('warrior-pct');
+  if (wf && s >= 35) {
+    var pct = Math.min(Math.round(((s - 35) / 55) * 100), 100);
+    wf.style.width = pct + '%';
+    if (wp) wp.textContent = pct + '%';
+  }
+};
+recalcAll();
+</script>
+</body>
+</html>
